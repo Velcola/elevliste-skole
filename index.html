@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Document</title>
+</head>
+<body>
+    <form id="elev-form">
+        <label>
+            ID
+        </label>
+        <select id="id"></select>
+        <label>
+            Fornavn
+        </label>
+        <input id="fornavn">
+        <label>
+            Etternavn
+        </label>
+        <input id="etternavn">
+        <label>
+            Epost
+        </label>
+        <input id="epost">
+        <label>
+            Telefonnummer
+        </label>
+        <input id="tlfnr">
+        <br>
+        <button type="submit">Legg til</button>
+        <button id="update">Oppdater</button>
+    </form>
+    <div>
+        <h2>Elever</h2>
+        <ul id="elev-liste">
+        </ul>
+    </div>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        import { getFirestore, addDoc, getDoc, getDocs, updateDoc, doc, collection } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"
+        // https://firebase.google.com/docs/web/setup#available-libraries
+      
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyDQJBKBgqCXaBebup6sGDJ-39k2WpgpozM",
+          authDomain: "elevliste-60b8c.firebaseapp.com",
+          projectId: "elevliste-60b8c",
+          storageBucket: "elevliste-60b8c.firebasestorage.app",
+          messagingSenderId: "885432682654",
+          appId: "1:885432682654:web:b45488be832c56375ad38f"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore();
+
+        async function getStudents() {
+            const studentsList = [];
+            const studentsListEl = document.getElementById("elev-liste");
+            const snapshot = await getDocs(collection(db, "elever"));
+
+            snapshot.forEach((docSnap) => {
+                studentsList.push(
+                    '<strong>' + docSnap.data().fornavn + ' ' + docSnap.data().etternavn + '</strong> <em>(ID: ' + docSnap.id + ')</em>'
+                );
+            });
+
+            studentsList.forEach((student) => {
+                const item = document.createElement("li");
+                item.innerHTML = student;
+                studentsListEl.appendChild(item);
+            })
+
+        }
+
+        document.addEventListener('DOMContentLoaded', async (e) => {
+            e.preventDefault();
+
+            getStudents();
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "elever"));
+                const selectElement = document.getElementById('id');
+
+                querySnapshot.forEach((doc) => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.id;
+                    selectElement.appendChild(option);
+                })
+            } catch (error) {
+                console.error("Error fetching document IDs: ", error);
+            }
+        });
+
+        const form = document.getElementById("elev-form");
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fornavn = form.fornavn.value;
+            const etternavn = form.etternavn.value;
+            const epost = form.epost.value;
+            const tlfnr = form.tlfnr.value;
+
+            await addDoc(
+                collection(db, "elever"), {
+                    fornavn: fornavn,
+                    etternavn: etternavn,
+                    epost: epost,
+                    telefon: tlfnr
+                }
+            );
+
+            alert("Elev lagt til");
+            form.reset();
+        });
+
+        const updateButton = document.getElementById("update");
+        updateButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const id = form.id.value;
+            const data = await getDoc(
+                doc(db, "elever", id)
+            );
+            const fornavn = form.fornavn.value ? form.fornavn.value : data.data().fornavn;
+            const etternavn = form.etternavn.value ? form.etternavn.value : data.data().etternavn;
+            const epost = form.epost.value ? form.epost.value : data.data().epost;
+            const tlfnr = form.tlfnr.value ? form.tlfnr.value : data.data().telefon;
+
+            await updateDoc(
+                doc(db, "elever", id), {
+                    fornavn: fornavn,
+                    etternavn: etternavn,
+                    epost: epost,
+                    telefon: tlfnr
+                }
+            );
+
+            alert("Elev oppdatert");
+            form.reset();
+        });
+
+      </script>
+</body>
+</html>
